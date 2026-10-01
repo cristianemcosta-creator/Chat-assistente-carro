@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Consultar - Concessionária</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2b2b2f, #121214);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 430px;
+            height: 700px;
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CABEÇALHO */
+
+        .chat-header {
+            background: linear-gradient(135deg, #1c1c1f, #34343a);
+            border-bottom: 3px solid #d32f2f;
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .car-icon {
+            width: 48px;
+            height: 48px;
+            background: #d32f2f;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .header-info h2 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .status {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .online {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        /* ÁREA DO CHAT */
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f3f3f5;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 78%;
+            padding: 12px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .bot .message-content {
+            background: white;
+            color: #2a2a2e;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .user .message-content {
+            background: #c62828;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .time {
+            display: block;
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.6;
+        }
+
+        /* OPÇÕES */
+
+        .quick-options {
+            padding: 10px 20px;
+            background: white;
+            border-top: 1px solid #e6e6e9;
+        }
+
+        .quick-options p {
+            font-size: 12px;
+            color: #6b6b72;
+            margin-bottom: 8px;
+        }
+
+        .options {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .option {
+            border: 1px solid #c62828;
+            background: white;
+            color: #c62828;
+            padding: 8px 11px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .option:hover {
+            background: #c62828;
+            color: white;
+        }
+
+        /* CAMPO DE DIGITAÇÃO */
+
+        .chat-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e6e6e9;
+        }
+
+        .chat-input input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: #f0f0f2;
+            border-radius: 25px;
+            padding: 13px 17px;
+            font-size: 14px;
+        }
+
+        .send-button {
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 50%;
+            background: #c62828;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.2s;
+        }
+
+        .send-button:hover {
+            background: #8e1b1b;
+            transform: scale(1.05);
+        }
+
+        /* DIGITANDO */
+
+        .typing {
+            display: none;
+            font-size: 12px;
+            color: #6b6b72;
+            padding: 0 20px 8px;
+            background: #f3f3f5;
+        }
+
+        /* RESPONSIVO */
+
+        @media (max-width: 500px) {
+
+            body {
+                padding: 0;
+            }
+
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="chat-container">
+
+    <!-- CABEÇALHO -->
+    <div class="chat-header">
+
+        <div class="car-icon">
+            🚗
+        </div>
+
+        <div class="header-info">
+            <h2>Consultar Virtual</h2>
+
+            <div class="status">
+                <span class="online"></span>
+                Online • Concessionária
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- MENSAGENS -->
+    <div class="chat-messages" id="chatMessages">
+
+        <div class="message bot">
+
+            <div class="message-content">
+
+                Olá! 👋
+
+                <br><br>
+
+                Seja bem-vindo(a) ao atendimento virtual da nossa concessionária.
+
+                <br><br>
+
+                Estou aqui para ajudar você a encontrar o carro ideal.
+                Como posso ajudar?
+
+                <span class="time"></span>
+
+            </div>
+
+        </div>
+
+
+        <div class="message bot">
+
+            <div class="message-content">
+
+                Posso ajudar com:
+
+                <br><br>
+
+                🚗 Encontrar um carro<br>
+                💰 Consultar preços<br>
+                💳 Simular financiamento<br>
+                🔄 Avaliar meu usado<br>
+                🔑 Agendar test drive<br>
+                📍 Localização da concessionária
+
+                <span class="time"></span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INDICADOR -->
+    <div class="typing" id="typing">
+        🚘 Consultor está digitando...
+    </div>
+
+
+    <!-- OPÇÕES -->
+    <div class="quick-options">
+
+        <p>Escolha uma opção:</p>
+
+        <div class="options">
+
+            <button class="option" onclick="quickMessage('Quero ver os veículos')">
+                🚗 Ver veículos
+            </button>
+
+            <button class="option" onclick="quickMessage('Quais são os preços?')">
+                💰 Preços
+            </button>
+
+            <button class="option" onclick="quickMessage('Quero simular um financiamento')">
+                💳 Financiamento
+            </button>
+
+            <button class="option" onclick="quickMessage('Quero trocar meu carro')">
+                🔄 Troca de veículo
+            </button>
+
+            <button class="option" onclick="quickMessage('Quero agendar um test drive')">
+                🔑 Test drive
+            </button>
+
+            <button class="option" onclick="quickMessage('Onde fica a concessionária?')">
+                📍 Localização
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- INPUT -->
+    <div class="chat-input">
+
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Digite sua mensagem..."
+            onkeypress="handleKey(event)"
+        >
+
+        <button class="send-button" onclick="sendMessage()">
+            ➤
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    function getTime() {
+
+        const now = new Date();
+
+        return now.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+    }
+
+
+    // Remove acentos e converte para minúsculas
+    function normalize(text) {
+
+        return text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+    }
+
+
+    // Verifica se a mensagem contém algum dos termos (com ou sem acento)
+    function has(message, terms) {
+
+        return terms.some(term => message.includes(normalize(term)));
+
+    }
+
+
+    // Mensagens do usuário entram como texto; só as do bot aceitam HTML
+    function addMessage(text, type) {
+
+        const chat = document.getElementById("chatMessages");
+
+        const message = document.createElement("div");
+        message.classList.add("message", type);
+
+        const content = document.createElement("div");
+        content.classList.add("message-content");
+
+        if (type === "user") {
+            content.appendChild(document.createTextNode(text));
+        } else {
+            content.innerHTML = text;
+        }
+
+        const time = document.createElement("span");
+        time.classList.add("time");
+        time.textContent = getTime();
+        content.appendChild(time);
+
+        message.appendChild(content);
+        chat.appendChild(message);
+
+        chat.scrollTop = chat.scrollHeight;
+
+    }
+
+
+    function sendMessage() {
+
+        const input = document.getElementById("messageInput");
+
+        const text = input.value.trim();
+
+        if (text === "") {
+            return;
+        }
+
+        addMessage(text, "user");
+
+        input.value = "";
+
+        simulateResponse(text);
+
+    }
+
+
+    function quickMessage(text) {
+
+        addMessage(text, "user");
+
+        simulateResponse(text);
+
+    }
+
+
+    function simulateResponse(text) {
+
+        const typing = document.getElementById("typing");
+
+        typing.style.display = "block";
+
+        setTimeout(() => {
+
+            typing.style.display = "none";
+
+            let response = "";
+
+            const message = normalize(text);
+
+
+            if (
+                has(message, [
+                    "vendedor", "consultor", "atendente", "atendimento",
+                    "falar com alguém", "falar com uma pessoa"
+                ])
+            ) {
+
+                response = `
+                    👨‍💼 Claro! Vou direcionar você para um consultor.
+
+                    <br><br>
+
+                    Para agilizar seu atendimento, informe seu nome
+                    e o veículo que você deseja conhecer.
+
+                    <br><br>
+
+                    <em>Este é um protótipo de demonstração: a conversa
+                    não é encaminhada para uma pessoa real.</em>
+                `;
+
+            }
+
+            else if (
+                has(message, [
+                    "trocar", "troca", "usado", "meu carro",
+                    "avaliar meu carro"
+                ])
+            ) {
+
+                response = `
+                    🔄 Claro! Podemos considerar seu veículo atual
+                    como parte da negociação, sujeito à avaliação.
+
+                    <br><br>
+
+                    Para iniciar, você pode informar:<br>
+                    • Marca e modelo<br>
+                    • Ano<br>
+                    • Quilometragem aproximada<br>
+                    • Estado geral do veículo
+
+                    <br><br>
+
+                    Depois, um consultor poderá orientar você
+                    sobre a avaliação.
+                `;
+
+            }
+
+            else if (
+                has(message, [
+                    "test drive", "teste", "dirigir", "experimentar"
+                ])
+            ) {
+
+                response = `
+                    🔑 Será um prazer ajudar você a agendar um test drive.
+
+                    <br><br>
+
+                    Informe o modelo que deseja conhecer e podemos
+                    encaminhar seu atendimento para verificar
+                    disponibilidade.
+                `;
+
+            }
+
+            else if (
+                has(message, [
+                    "financiamento", "financiar", "parcela", "parcelas",
+                    "crédito", "entrada", "banco"
+                ])
+            ) {
+
+                response = `
+                    💳 Trabalhamos com opções de financiamento que podem
+                    variar de acordo com o veículo, entrada, prazo e
+                    análise de crédito.
+
+                    <br><br>
+
+                    Se quiser, informe aproximadamente:<br>
+                    • Valor de entrada<br>
+                    • Valor ou modelo do veículo<br>
+                    • Quantidade de parcelas desejada
+
+                    <br><br>
+
+                    Assim podemos encaminhar sua solicitação
+                    para um consultor.
+                `;
+
+            }
+
+            else if (
+                has(message, [
+                    "preço", "valor", "custa", "quanto custa", "tabela"
+                ])
+            ) {
+
+                response = `
+                    💰 O SUV Custa 199.900,00, Picape a partit de 239.000,00, Linha comercial a partir 350.000,00
+                    <br><br>
+
+                    Se você me disser qual carro está procurando,
+                    posso direcionar seu atendimento.
+                `;
+
+            }
+
+            else if (
+                has(message, [
+                    "endereço", "localização", "onde fica", "concessionária",
+                    "loja", "horário"
+                ])
+            ) {
+
+                response = `
+                    📍 <strong>FORTE VEICULOS</strong><br><br>
+
+                    Nossa equipe está pronta para receber você.
+
+                    <br><br>
+
+                    Endereço: Rua Luiz Saldanha Rodrigues, 1357<br>
+                    Horário: de Segunda a Sexta Feira das 08:00 as 18:00<br>
+                    📞 Telefone: 143325-1999<br>
+                    WhatsApp: 149664-9097
+                `;
+
+            }
+
+            else if (
+                has(message, [
+                    "carro", "carros", "veículo", "veículos", "modelo",
+                    "modelos", "estoque"
+                ])
+            ) {
+
+                response = `
+                    Claro! 🚗
+
+                    <br><br>
+
+                    Posso ajudar você a encontrar um veículo de acordo
+                    com seu perfil. Você procura:<br>
+                    • Hatch<br>
+                    • Sedan<br>
+                    • SUV<br>
+                    • Picape<br>
+                    • Comercial
+
+                    <br><br>
+
+                    Se preferir, informe o modelo que você está procurando.
+                `;
+
+            }
+
+            else if (has(message, ["comprar", "compra"])) {
+
+                response = `
+                    Ótimo! 🚗
+
+                    <br><br>
+
+                    Para ajudar você melhor, qual tipo de veículo procura?
+                    Você já tem algum modelo em mente ou gostaria de
+                    receber sugestões?
+
+                    <br><br>
+
+                    Se preferir, posso chamar um consultor.
+                `;
+
+            }
+
+            else if (/\b(oi|ola|bom dia|boa tarde|boa noite)\b/.test(message)) {
+
+                response = `
+                    Olá! 😊
+
+                    <br><br>
+
+                    É um prazer atender você.
+                    Como posso ajudar?
+                `;
+
+            }
+
+            else {
+
+                response = `
+                    🤖 Entendi!
+
+                    <br><br>
+
+                    Ainda não consegui identificar exatamente o que
+                    você procura. Posso ajudar com:
+
+                    <br><br>
+
+                    🚗 Veículos<br>
+                    💰 Preços<br>
+                    💳 Financiamento<br>
+                    🔄 Troca de veículo<br>
+                    🔑 Test drive<br>
+                    📍 Localização
+
+                    <br><br>
+
+                    Ou escreva sua dúvida de forma livre.
+                `;
+
+            }
+
+            addMessage(response, "bot");
+
+        }, 1200);
+
+    }
+
+
+    function handleKey(event) {
+
+        if (event.key === "Enter") {
+
+            sendMessage();
+
+        }
+
+    }
+
+
+    // Horário nas mensagens iniciais
+    document.querySelectorAll(".time").forEach(el => {
+        el.textContent = getTime();
+    });
+
+</script>
+
+</body>
+</html>
